@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const Pergunta = require('./database/Pergunta');
+const Resposta = require('./database/Resposta');
 
 const connection = require('./database/database');
 
@@ -36,7 +37,18 @@ app.get('/pergunta/:id', (req, res) => {
         }
     }).then(pergunta => {
         if( pergunta != undefined){
-            res.render('pergunta');
+
+            Resposta.findAll({
+                where:{perguntaId: pergunta.id},
+                order:[
+                    ['id', 'DESC']
+                ]
+            }).then( respostas => {
+                res.render('pergunta',{
+                    pergunta: pergunta,
+                    respostas: respostas
+                });
+            });
         }else{
             res.redirect('/');
         }
@@ -58,6 +70,18 @@ app.post('/salvarpergunta',(req, res) => {
         res.redirect('/');
     })
 })
+
+app.post('/responder', (req, res) => {
+    var corpo = req.body.corpo;
+    var perguntaId = req.body.perguntaId;
+
+    Resposta.create({
+        corpo: corpo,
+        perguntaId:perguntaId
+    }).then(() =>{
+        res.redirect('/pergunta/'+ perguntaId);
+    })
+});
 
 app.listen(3000, () => {
     console.log("App rodando");
